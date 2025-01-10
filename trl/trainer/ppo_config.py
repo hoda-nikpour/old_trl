@@ -60,7 +60,7 @@ class PPOConfig(OnPolicyConfig):
     cliprange_value: float = 0.2
     gamma: float = 1.0
     lam: float = 0.95
-    alpha: float = 0.1 # discount factor for the estimated returns of the newly searched paper
+    gamma1: float = 0.1 # discount factor for the estimated returns of the newly searched paper
     rounds: int = 2 # rollout rounds
     use_vm: bool = True # use value model to estimate the returns of the new papers
     use_selector: bool = True

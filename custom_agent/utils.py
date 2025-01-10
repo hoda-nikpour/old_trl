@@ -224,11 +224,11 @@ def response_handler(
             # get value model score
             if args.use_vm:
                 with lock:
-                    with concurrent.futures.ThreadPoolExecutor() as executor: # Using external threads can minimize the negative impact of OOM
+                    with concurrent.futures.ThreadPoolExecutor() as executor: # Even if OOM while calling value model, it will not affect the training.
                         try:
                             future = executor.submit(call_vm, value_model_prompts, tokenizer, query_responses.device, value_model)
                             result = future.result()
-                            score += args.alpha * result
+                            score += args.gamma1 * result
                         except Exception as e:
                             print(f"call value function error: {e}")
 
