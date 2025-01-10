@@ -2,6 +2,7 @@ import re
 import gc
 import json
 import torch
+import warnings
 import threading
 import concurrent.futures
 from typing                     import List, Dict, Any
@@ -113,10 +114,7 @@ def call_vm(value_model_prompts, tokenizer, device, value_model):
     return score
 
 def call_selector(select_prompts: List[str]) -> List[Dict[str, Any]]:
-    """
-    Deploy an additional selector to get the relevant possibilities of paper and user_query.
-    Implement a function `call_selector` that takes the prompts of the selector as input and returns the probability scores.
-    """
+    warnings.warn("Deploy an additional selector to get the relevant possibilities of paper and user_query.\nImplement a function `call_selector` that takes the prompts of the selector as input and returns the probability scores.")
     return [{"prob": 0} for _ in range(len(select_prompts))]
 
 def response_handler(

@@ -1,13 +1,7 @@
-
 import re
-import os
 import json
 import requests
 from datetime import datetime
-
-def log(desc, value):
-    if int(os.environ.get('LOCAL_RANK', 0)) == 0:
-        print(desc, value)
 
 def google_search_arxiv_id(query, num=10, end_date=None):
     url = "https://google.serper.dev/search"

@@ -392,7 +392,7 @@ class PPOTrainer(Trainer):
                         logitss.append(logits)
                         response_lengths.append(logits.shape[1])
 
-                        queries, f_papers, score, answers = rollout(
+                        queries, next_f_papers, score, next_answers = rollout(
                             query_response, 
                             self.processing_class, 
                             context_length, 
@@ -413,6 +413,8 @@ class PPOTrainer(Trainer):
                                 queries = torch.cat((queries, queries[:2, ...]), dim=0)
                         else:
                             trajectory[0] = "expand"
+                            f_papers = next_f_papers
+                            answers = next_answers
                         
                         if trajectory[1]:
                             queries_list.append(queries)
@@ -514,7 +516,7 @@ class PPOTrainer(Trainer):
 
                 # 4. compute rewards
                 kl = logprobs - ref_logprobs
-                non_score_reward = -args.kl_coef * kl # 0.05
+                non_score_reward = -args.kl_coef * kl # 0.1
                 rewards = non_score_reward.clone()
                 rewards += scores
 
@@ -637,9 +639,6 @@ class PPOTrainer(Trainer):
                 metrics["objective/non_score_reward"] = self.accelerator.gather(mean_non_score_reward).mean().item()
                 metrics["objective/rlhf_reward"] = self.accelerator.gather(rlhf_reward).mean().item()
                 metrics["objective/scores"] = self.accelerator.gather(scores.sum(1).mean()).mean().item()
-                if len(scores) > 4:
-                    metrics["objective/search_scores"] = self.accelerator.gather(scores[:4].sum(1).mean()).mean().item()
-                    metrics["objective/expand_scores"] = self.accelerator.gather(scores[4:].sum(1).mean()).mean().item()
                 metrics["policy/approxkl_avg"] = self.accelerator.gather(approxkl_stats).mean().item()
                 metrics["policy/clipfrac_avg"] = self.accelerator.gather(pg_clipfrac_stats).mean().item()
                 metrics["loss/policy_avg"] = self.accelerator.gather(pg_loss_stats).mean().item()

@@ -19,9 +19,9 @@ class AgentDataset(Dataset):
                 data = json.loads(line)
                 prompt_template = data.get("prompt", "generate_query")
                 if prompt_template == "generate_query":
-                    prompt = prompts["generate_query"].format(user_query=data["user_query"])
+                    prompt = prompts["generate_query"].format(user_query=data["question"])
                 else:
-                    prompt = prompts["select_section"].format(user_query=data["user_query"], title=data["title"], abstract=data["abstract"], sections=data["sections"])
+                    prompt = prompts["select_section"].format(user_query=data["question"], title=data["title"], abstract=data["abstract"], sections=data["sections"])
                 self.messages.append({
                     "content": prompt,
                     "role": "user"
