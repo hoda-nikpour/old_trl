@@ -11,57 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-# Full training
-python examples/scripts/sft.py \
-    --model_name_or_path Qwen/Qwen2-0.5B \
-    --dataset_name trl-lib/Capybara \
-    --learning_rate 2.0e-5 \
-    --num_train_epochs 1 \
-    --packing \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 8 \
-    --gradient_checkpointing \
-    --logging_steps 25 \
-    --eval_strategy steps \
-    --eval_steps 100 \
-    --output_dir Qwen2-0.5B-SFT \
-    --push_to_hub
-
-# LoRA
-python examples/scripts/sft.py \
-    --model_name_or_path Qwen/Qwen2-0.5B \
-    --dataset_name trl-lib/Capybara \
-    --learning_rate 2.0e-4 \
-    --num_train_epochs 1 \
-    --packing \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 8 \
-    --gradient_checkpointing \
-    --logging_steps 25 \
-    --eval_strategy steps \
-    --eval_steps 100 \
-    --use_peft \
-    --lora_r 32 \
-    --lora_alpha 16 \
-    --output_dir Qwen2-0.5B-SFT \
-    --push_to_hub
-"""
 
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
 from trl import (
-    ModelConfig,
-    ScriptArguments,
-    SFTConfig,
-    SFTTrainer,
+    ModelConfig, # trl/trl/trainer/model_config.py
+    ScriptArguments, # trl/trl/utils.py
+    SFTConfig, # trl/trl/trainer/sft_config.py transformers/src/transformers/training_args.py
+    SFTTrainer, # trl/trl/trainer/sft_trainer.py
     TrlParser,
     get_kbit_device_map,
-    get_peft_config,
+    get_peft_config, # trl/trl/trainer/utils.py
     get_quantization_config,
+    DataCollatorForCompletionOnlyLM
 )
-
 
 if __name__ == "__main__":
     parser = TrlParser((ScriptArguments, SFTConfig, ModelConfig))
@@ -84,12 +48,13 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(
         model_config.model_name_or_path, trust_remote_code=model_config.trust_remote_code, use_fast=True
     )
-    tokenizer.pad_token = tokenizer.eos_token
 
     ################
     # Dataset
     ################
-    dataset = load_dataset(script_args.dataset_name)
+    dataset = load_dataset("json", data_files={"train": script_args.dataset_name})
+    response_template = "<|im_start|>assistant\n"
+    collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer) # 只计算assistant部分的loss
 
     ################
     # Training
@@ -98,9 +63,11 @@ if __name__ == "__main__":
         model=model_config.model_name_or_path,
         args=training_args,
         train_dataset=dataset[script_args.dataset_train_split],
-        eval_dataset=dataset[script_args.dataset_test_split],
+        # eval_dataset=dataset[script_args.dataset_test_split],
         processing_class=tokenizer,
         peft_config=get_peft_config(model_config),
+        data_collator=collator,
+        # gradient_checkpointing_kwargs={'use_reentrant':False},
     )
 
     trainer.train()
