@@ -9,7 +9,6 @@ prompts = {
 
 class AgentDataset(Dataset):
     def __init__(self, annotations_file, tokenizer):
-        self.ids       = []
         self.messages  = []
         self.input_ids = []
         self.answers   = []
@@ -26,7 +25,6 @@ class AgentDataset(Dataset):
                     "content": prompt,
                     "role": "user"
                 })
-                self.ids.append(data["id"])
                 input_ids = tokenizer.apply_chat_template(
                     [self.messages[-1]],
                     tokenize=True,
@@ -44,7 +42,7 @@ class AgentDataset(Dataset):
                 self.answers.append(answers_ids['input_ids'][0])
     
     def __len__(self):
-        return len(self.ids)
+        return len(self.messages)
 
     def __getitem__(self, idx):
         return {
